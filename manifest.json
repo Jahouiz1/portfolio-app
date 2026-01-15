@@ -2,7 +2,7 @@
   "name": "Singapore Portfolio Analyzer",
   "short_name": "Portfolio",
   "description": "Track your wealth with CPF, SRS, and SGD-denominated assets",
-  "start_url": "/",
+  "start_url": "./"
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#1e293b",
@@ -21,4 +21,5 @@
       "purpose": "any maskable"
     }
   ]
+
 }
