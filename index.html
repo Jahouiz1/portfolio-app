@@ -74,6 +74,7 @@
       const [newAsset, setNewAsset] = useState({ name: '', category: 'Stocks', value: '', currency: 'SGD' });
       const [newLiability, setNewLiability] = useState({ name: '', value: '', currency: 'SGD' });
       const [newExpense, setNewExpense] = useState({ category: '', amount: '', type: 'variable' });
+      const [newCollectible, setNewCollectible] = useState({ name: '', value: '', currency: 'SGD', condition: 'Raw', notes: '' });
       
       const pieChartRef = useRef(null);
       const pieChartInstance = useRef(null);
@@ -104,6 +105,9 @@
       const totalExpenses = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses]);
       const monthlySavings = monthlyIncome - totalExpenses;
       const savingsRate = monthlyIncome > 0 ? ((monthlySavings / monthlyIncome) * 100).toFixed(1) : 0;
+      
+      const collectibles = useMemo(() => assets.filter(a => a.category === 'Collectibles'), [assets]);
+      const totalCollectiblesValue = useMemo(() => collectibles.reduce((sum, c) => sum + c.value, 0), [collectibles]);
       
       const chartData = useMemo(() => {
         const groups = {};
@@ -253,6 +257,23 @@
         }
       };
       
+      const addCollectible = () => {
+        if (newCollectible.name && newCollectible.value) {
+          const val = newCollectible.currency === 'USD' 
+            ? parseFloat(newCollectible.value) * usdRate 
+            : parseFloat(newCollectible.value);
+          setAssets([...assets, { 
+            id: Date.now(), 
+            name: newCollectible.name, 
+            category: 'Collectibles', 
+            value: val,
+            condition: newCollectible.condition,
+            notes: newCollectible.notes
+          }]);
+          setNewCollectible({ name: '', value: '', currency: 'SGD', condition: 'Raw', notes: '' });
+        }
+      };
+      
       const addLiability = () => {
         if (newLiability.name && newLiability.value) {
           const val = newLiability.currency === 'USD' 
@@ -313,7 +334,7 @@
             
             <div className="bg-slate-800 rounded-lg shadow-lg mb-6 border border-slate-700">
               <div className="flex border-b border-slate-700 overflow-x-auto">
-                {['overview', 'projections', 'expenses', 'manage'].map(tab => (
+                {['overview', 'projections', 'expenses', 'collectibles', 'manage'].map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -365,7 +386,7 @@
                     <div>Bonds: 4% p.a.</div>
                     <div>CPF: 2.5% p.a.</div>
                     <div>Crypto: 15% p.a.</div>
-                    <div>Cash: 2% p.a.</div>
+                    <div>Collectibles: 8% p.a.</div>
                   </div>
                   <p className="text-xs text-blue-300 mt-2">⚠️ Past performance doesn't guarantee future results</p>
                 </div>
@@ -465,142 +486,240 @@
               </div>
             )}
             
-            {activeTab === 'manage' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            {activeTab === 'collectibles' && (
+              <div className="space-y-6">
                 <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
-                  <h2 className="text-xl font-semibold text-white mb-4">Add Asset</h2>
-                  <div className="space-y-3 mb-6">
-                    <input
-                      type="text"
-                      placeholder="Asset name"
-                      value={newAsset.name}
-                      onChange={(e) => setNewAsset({...newAsset, name: e.target.value})}
-                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
-                    />
-                    <select
-                      value={newAsset.category}
-                      onChange={(e) => setNewAsset({...newAsset, category: e.target.value})}
-                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
-                    >
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="number"
-                        placeholder="Value"
-                        value={newAsset.value}
-                        onChange={(e) => setNewAsset({...newAsset, value: e.target.value})}
-                        className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
-                      />
-                      <select
-                        value={newAsset.currency}
-                        onChange={(e) => setNewAsset({...newAsset, currency: e.target.value})}
-                        className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
-                      >
-                        <option value="SGD">SGD</option>
-                        <option value="USD">USD</option>
-                      </select>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold text-white">Pokemon Cards & Collectibles</h2>
+                    <div className="text-right">
+                      <div className="text-sm text-slate-400">Total Value</div>
+                      <div className="text-2xl font-bold text-purple-400">{fmt(totalCollectiblesValue)}</div>
                     </div>
-                    {newAsset.currency === 'USD' && newAsset.value && (
-                      <div className="text-xs text-blue-400">
-                        ≈ {fmt(parseFloat(newAsset.value) * usdRate)} SGD
-                      </div>
-                    )}
-                    <button
-                      onClick={addAsset}
-                      className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 font-medium"
-                    >
-                      + Add Asset
-                    </button>
                   </div>
                   
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-white mb-3">Your Assets ({assets.length})</h3>
-                    <div className="max-h-96 overflow-y-auto space-y-2">
-                      {assets.length > 0 ? assets.map(asset => (
-                        <div key={asset.id} className="flex justify-between items-center p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-slate-200 truncate">{asset.name}</div>
-                            <div className="text-sm text-slate-400">{asset.category}</div>
-                          </div>
-                          <div className="flex items-center gap-3 ml-2">
-                            <span className="font-semibold text-green-400 whitespace-nowrap">{fmt(asset.value)}</span>
-                            <button
-                              onClick={() => setAssets(assets.filter(a => a.id !== asset.id))}
-                              className="text-red-400 hover:text-red-300 text-xl font-bold w-6 h-6"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        </div>
-                      )) : (
-                        <div className="text-center py-8 text-slate-400 bg-slate-700 rounded">
-                          <p>No assets added yet</p>
-                        </div>
-                      )}
-                    </div>
+                  <div className="bg-yellow-900 border border-yellow-700 rounded-lg p-4 mb-4">
+                    <h3 className="font-semibold text-yellow-200 mb-2">💡 Pricing Resources</h3>
+                    <p className="text-sm text-yellow-300 mb-2">Check current market values on:</p>
+                    <ul className="text-sm text-yellow-300 space-y-1">
+                      <li>• <strong>Pokemon Cards:</strong> TCGPlayer, eBay sold listings, Alt.xyz, PriceCharting</li>
+                      <li>• <strong>Watches:</strong> Chrono24, WatchBox</li>
+                      <li>• <strong>Art:</strong> Artsy, Sotheby's, Christie's</li>
+                      <li>• <strong>Stamps/Coins:</strong> Stanley Gibbons, NGC</li>
+                    </ul>
                   </div>
                 </div>
                 
-                <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
-                  <h2 className="text-xl font-semibold text-white mb-4">Add Liability</h2>
-                  <div className="space-y-3 mb-6">
-                    <input
-                      type="text"
-                      placeholder="Liability name"
-                      value={newLiability.name}
-                      onChange={(e) => setNewLiability({...newLiability, name: e.target.value})}
-                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
-                    />
-                    <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
+                    <h2 className="text-xl font-semibold text-white mb-4">Add Collectible</h2>
+                    <div className="space-y-3">
                       <input
-                        type="number"
-                        placeholder="Amount"
-                        value={newLiability.value}
-                        onChange={(e) => setNewLiability({...newLiability, value: e.target.value})}
-                        className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
+                        type="text"
+                        placeholder="Card/Item name (e.g., Charizard Base Set)"
+                        value={newCollectible.name}
+                        onChange={(e) => setNewCollectible({...newCollectible, name: e.target.value})}
+                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
                       />
                       <select
-                        value={newLiability.currency}
-                        onChange={(e) => setNewLiability({...newLiability, currency: e.target.value})}
-                        className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                        value={newCollectible.condition}
+                        onChange={(e) => setNewCollectible({...newCollectible, condition: e.target.value})}
+                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
                       >
-                        <option value="SGD">SGD</option>
-                        <option value="USD">USD</option>
+                        <option value="Raw">Raw (Ungraded)</option>
+                        <option value="PSA 10">PSA 10 (Gem Mint)</option>
+                        <option value="PSA 9">PSA 9 (Mint)</option>
+                        <option value="PSA 8">PSA 8 (NM-Mint)</option>
+                        <option value="PSA 7">PSA 7 (Near Mint)</option>
+                        <option value="CGC 10">CGC 10 (Pristine)</option>
+                        <option value="CGC 9.5">CGC 9.5 (Gem Mint)</option>
+                        <option value="BGS 10">BGS 10 (Black Label)</option>
+                        <option value="BGS 9.5">BGS 9.5 (Gem Mint)</option>
                       </select>
-                    </div>
-                    {newLiability.currency === 'USD' && newLiability.value && (
-                      <div className="text-xs text-blue-400">
-                        ≈ {fmt(parseFloat(newLiability.value) * usdRate)} SGD
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="number"
+                          placeholder="Current Value"
+                          value={newCollectible.value}
+                          onChange={(e) => setNewCollectible({...newCollectible, value: e.target.value})}
+                          className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
+                        />
+                        <select
+                          value={newCollectible.currency}
+                          onChange={(e) => setNewCollectible({...newCollectible, currency: e.target.value})}
+                          className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                        >
+                          <option value="SGD">SGD</option>
+                          <option value="USD">USD</option>
+                        </select>
                       </div>
-                    )}
-                    <button
-                      onClick={addLiability}
-                      className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 font-medium"
-                    >
-                      + Add Liability
-                    </button>
+                      {newCollectible.currency === 'USD' && newCollectible.value && (
+                        <div className="text-xs text-blue-400">
+                          ≈ {fmt(parseFloat(newCollectible.value) * usdRate)} SGD
+                        </div>
+                      )}
+                      <input
+                        type="text"
+                        placeholder="Notes (optional - e.g., 1st Edition, Shadowless)"
+                        value={newCollectible.notes}
+                        onChange={(e) => setNewCollectible({...newCollectible, notes: e.target.value})}
+                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
+                      />
+                      <button
+                        onClick={addCollectible}
+                        className="w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 font-medium"
+                      >
+                        + Add to Collection
+                      </button>
+                    </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-white mb-3">Your Liabilities ({liabilities.length})</h3>
+                  <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
+                    <h2 className="text-xl font-semibold text-white mb-4">Your Collection ({collectibles.length})</h2>
                     <div className="max-h-96 overflow-y-auto space-y-2">
-                      {liabilities.length > 0 ? liabilities.map(liability => (
-                        <div key={liability.id} className="flex justify-between items-center p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-slate-200 truncate">{liability.name}</div>
-                          </div>
-                          <div className="flex items-center gap-3 ml-2">
-                            <span className="font-semibold text-red-400 whitespace-nowrap">{fmt(liability.value)}</span>
-                            <button
-                              onClick={() => setLiabilities(liabilities.filter(l => l.id !== liability.id))}
-                              className="text-red-400 hover:text-red-300 text-xl font-bold w-6 h-6"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        </div>
-                )) : (
+                      {collectibles.length > 0 ? collectibles.map(item => (
+                        <div key={item.id} className="p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-slate-200 truncate">{item.name}</div>
+                              <div className="text-sm text-purple-400">{item.condition}</div>
+                              {item.notes && (
+                                <div className
+                                  {activeTab === 'manage' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
+              <h2 className="text-xl font-semibold text-white mb-4">Add Asset</h2>
+              <div className="space-y-3 mb-6">
+                <input
+                  type="text"
+                  placeholder="Asset name"
+                  value={newAsset.name}
+                  onChange={(e) => setNewAsset({...newAsset, name: e.target.value})}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
+                />
+                <select
+                  value={newAsset.category}
+                  onChange={(e) => setNewAsset({...newAsset, category: e.target.value})}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                >
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    placeholder="Value"
+                    value={newAsset.value}
+                    onChange={(e) => setNewAsset({...newAsset, value: e.target.value})}
+                    className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
+                  />
+                  <select
+                    value={newAsset.currency}
+                    onChange={(e) => setNewAsset({...newAsset, currency: e.target.value})}
+                    className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                  >
+                    <option value="SGD">SGD</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+                {newAsset.currency === 'USD' && newAsset.value && (
+                  <div className="text-xs text-blue-400">
+                    ≈ {fmt(parseFloat(newAsset.value) * usdRate)} SGD
+                  </div>
+                )}
+                <button
+                  onClick={addAsset}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 font-medium"
+                >
+                  + Add Asset
+                </button>
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-white mb-3">Your Assets ({assets.length})</h3>
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {assets.length > 0 ? assets.map(asset => (
+                    <div key={asset.id} className="flex justify-between items-center p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-200 truncate">{asset.name}</div>
+                        <div className="text-sm text-slate-400">{asset.category}</div>
+                      </div>
+                      <div className="flex items-center gap-3 ml-2">
+                        <span className="font-semibold text-green-400 whitespace-nowrap">{fmt(asset.value)}</span>
+                        <button
+                          onClick={() => setAssets(assets.filter(a => a.id !== asset.id))}
+                          className="text-red-400 hover:text-red-300 text-xl font-bold w-6 h-6"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="text-center py-8 text-slate-400 bg-slate-700 rounded">
+                      <p>No assets added yet</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
+              <h2 className="text-xl font-semibold text-white mb-4">Add Liability</h2>
+              <div className="space-y-3 mb-6">
+                <input
+                  type="text"
+                  placeholder="Liability name"
+                  value={newLiability.name}
+                  onChange={(e) => setNewLiability({...newLiability, name: e.target.value})}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    placeholder="Amount"
+                    value={newLiability.value}
+                    onChange={(e) => setNewLiability({...newLiability, value: e.target.value})}
+                    className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
+                  />
+                  <select
+                    value={newLiability.currency}
+                    onChange={(e) => setNewLiability({...newLiability, currency: e.target.value})}
+                    className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                  >
+                    <option value="SGD">SGD</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+                {newLiability.currency === 'USD' && newLiability.value && (
+                  <div className="text-xs text-blue-400">
+                    ≈ {fmt(parseFloat(newLiability.value) * usdRate)} SGD
+                  </div>
+                )}
+                <button
+                  onClick={addLiability}
+                  className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 font-medium"
+                >
+                  + Add Liability
+                </button>
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-white mb-3">Your Liabilities ({liabilities.length})</h3>
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {liabilities.length > 0 ? liabilities.map(liability => (
+                    <div key={liability.id} className="flex justify-between items-center p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-200 truncate">{liability.name}</div>
+                      </div>
+                      <div className="flex items-center gap-3 ml-2">
+                        <span className="font-semibold text-red-400 whitespace-nowrap">{fmt(liability.value)}</span>
+                        <button
+                          onClick={() => setLiabilities(liabilities.filter(l => l.id !== liability.id))}
+                          className="text-red-400 hover:text-red-300 text-xl font-bold w-6 h-6"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  )) : (
                     <div className="text-center py-8 text-slate-400 bg-slate-700 rounded">
                       <p>No liabilities added yet</p>
                     </div>
