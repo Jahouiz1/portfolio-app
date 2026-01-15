@@ -5,16 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Singapore Portfolio Analyzer</title>
   
-  <!-- React -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  
-  <!-- Recharts - FIXED VERSION -->
-  <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
-  
-  <!-- Babel -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -28,13 +18,30 @@
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; color: white;">
+      <div style="text-align: center;">
+        <h1 style="font-size: 2rem; margin-bottom: 1rem;">Loading Portfolio Analyzer...</h1>
+        <div style="color: #94a3b8;">Please wait</div>
+      </div>
+    </div>
+  </div>
   
+  <!-- Load libraries in sequence -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Main App - Load AFTER all dependencies -->
   <script type="text/babel">
-    const { useState, useMemo } = React;
+    // Check if all libraries loaded
+    console.log('React:', typeof React);
+    console.log('ReactDOM:', typeof ReactDOM);
+    console.log('Recharts:', typeof Recharts);
     
-    // Wait for Recharts to load
-    const { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } = window.Recharts || {};
+    const { useState, useMemo } = React;
+    const { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } = Recharts;
     
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
     const CATEGORIES = ['Stocks', 'Bonds', 'Real Estate', 'Cash & Equivalents', 'Cryptocurrency', 'CPF', 'SRS', 'Collectibles', 'Other'];
@@ -117,13 +124,13 @@
             </div>
             
             <div className="bg-slate-800 rounded-lg shadow-lg mb-6 border border-slate-700">
-              <div className="flex border-b border-slate-700">
+              <div className="flex border-b border-slate-700 overflow-x-auto">
                 {['overview', 'manage'].map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`px-6 py-3 font-medium capitalize ${
-                      activeTab === tab ? 'border-b-2 border-blue-400 text-blue-400' : 'text-slate-400'
+                      activeTab === tab ? 'border-b-2 border-blue-400 text-blue-400' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {tab}
@@ -147,7 +154,7 @@
                         label={({ name, percentage }) => `${name}: ${percentage}%`}
                       >
                         {chartData.map((entry, index) => (
-                          <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip formatter={(value) => fmt(value)} />
@@ -171,14 +178,14 @@
                       placeholder="Asset name (e.g., Apple Stock, CPF OA)"
                       value={newAsset.name}
                       onChange={(e) => setNewAsset({...newAsset, name: e.target.value})}
-                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
                     />
                     <select
                       value={newAsset.category}
                       onChange={(e) => setNewAsset({...newAsset, category: e.target.value})}
                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
                     >
-                      {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                     <div className="grid grid-cols-2 gap-2">
                       <input
@@ -186,15 +193,15 @@
                         placeholder="Value"
                         value={newAsset.value}
                         onChange={(e) => setNewAsset({...newAsset, value: e.target.value})}
-                        className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                        className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
                       />
                       <select
                         value={newAsset.currency}
                         onChange={(e) => setNewAsset({...newAsset, currency: e.target.value})}
                         className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
                       >
-                        <option>SGD</option>
-                        <option>USD</option>
+                        <option value="SGD">SGD</option>
+                        <option value="USD">USD</option>
                       </select>
                     </div>
                     {newAsset.currency === 'USD' && newAsset.value && (
@@ -204,7 +211,7 @@
                     )}
                     <button
                       onClick={addAsset}
-                      className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 font-medium"
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 font-medium transition-colors"
                     >
                       + Add Asset
                     </button>
@@ -212,8 +219,8 @@
                   
                   <div className="space-y-2">
                     <h3 className="text-lg font-semibold text-white mb-3">Your Assets</h3>
-                    {assets.map(asset => (
-                      <div key={asset.id} className="flex justify-between items-center p-3 bg-slate-700 rounded">
+                    {assets.length > 0 ? assets.map(asset => (
+                      <div key={asset.id} className="flex justify-between items-center p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
                         <div>
                           <div className="font-medium text-slate-200">{asset.name}</div>
                           <div className="text-sm text-slate-400">{asset.category}</div>
@@ -222,15 +229,14 @@
                           <span className="font-semibold text-green-400">{fmt(asset.value)}</span>
                           <button
                             onClick={() => setAssets(assets.filter(a => a.id !== asset.id))}
-                            className="text-red-400 hover:text-red-300 text-xl"
+                            className="text-red-400 hover:text-red-300 text-xl font-bold w-6 h-6"
                           >
                             ×
                           </button>
                         </div>
                       </div>
-                    ))}
-                    {assets.length === 0 && (
-                      <div className="text-center py-8 text-slate-400">
+                    )) : (
+                      <div className="text-center py-8 text-slate-400 bg-slate-700 rounded">
                         <p>No assets added yet</p>
                       </div>
                     )}
@@ -245,7 +251,7 @@
                       placeholder="Liability name (e.g., HDB Loan, Car Loan)"
                       value={newLiability.name}
                       onChange={(e) => setNewLiability({...newLiability, name: e.target.value})}
-                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
                     />
                     <div className="grid grid-cols-2 gap-2">
                       <input
@@ -253,15 +259,15 @@
                         placeholder="Amount"
                         value={newLiability.value}
                         onChange={(e) => setNewLiability({...newLiability, value: e.target.value})}
-                        className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                        className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
                       />
                       <select
                         value={newLiability.currency}
                         onChange={(e) => setNewLiability({...newLiability, currency: e.target.value})}
                         className="px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
                       >
-                        <option>SGD</option>
-                        <option>USD</option>
+                        <option value="SGD">SGD</option>
+                        <option value="USD">USD</option>
                       </select>
                     </div>
                     {newLiability.currency === 'USD' && newLiability.value && (
@@ -271,7 +277,7 @@
                     )}
                     <button
                       onClick={addLiability}
-                      className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 font-medium"
+                      className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 font-medium transition-colors"
                     >
                       + Add Liability
                     </button>
@@ -279,8 +285,8 @@
                   
                   <div className="space-y-2">
                     <h3 className="text-lg font-semibold text-white mb-3">Your Liabilities</h3>
-                    {liabilities.map(liability => (
-                      <div key={liability.id} className="flex justify-between items-center p-3 bg-slate-700 rounded">
+                    {liabilities.length > 0 ? liabilities.map(liability => (
+                      <div key={liability.id} className="flex justify-between items-center p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
                         <div>
                           <div className="font-medium text-slate-200">{liability.name}</div>
                         </div>
@@ -288,15 +294,14 @@
                           <span className="font-semibold text-red-400">{fmt(liability.value)}</span>
                           <button
                             onClick={() => setLiabilities(liabilities.filter(l => l.id !== liability.id))}
-                            className="text-red-400 hover:text-red-300 text-xl"
+                            className="text-red-400 hover:text-red-300 text-xl font-bold w-6 h-6"
                           >
                             ×
                           </button>
                         </div>
                       </div>
-                    ))}
-                    {liabilities.length === 0 && (
-                      <div className="text-center py-8 text-slate-400">
+                    )) : (
+                      <div className="text-center py-8 text-slate-400 bg-slate-700 rounded">
                         <p>No liabilities added yet</p>
                       </div>
                     )}
@@ -309,12 +314,9 @@
       );
     }
     
-    // Wait for all libraries to load before rendering
-    if (window.Recharts && React && ReactDOM) {
-      ReactDOM.render(<App />, document.getElementById('root'));
-    } else {
-      console.error('Required libraries not loaded');
-    }
+    // Render the app
+    const root = document.getElementById('root');
+    ReactDOM.render(<App />, root);
   </script>
 </body>
 </html>
