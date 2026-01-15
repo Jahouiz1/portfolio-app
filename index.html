@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Singapore Portfolio Analyzer</title>
   
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
   <style>
@@ -18,30 +17,14 @@
   </style>
 </head>
 <body>
-  <div id="root">
-    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; color: white;">
-      <div style="text-align: center;">
-        <h1 style="font-size: 2rem; margin-bottom: 1rem;">Loading Portfolio Analyzer...</h1>
-        <div style="color: #94a3b8;">Please wait</div>
-      </div>
-    </div>
-  </div>
+  <div id="root"></div>
   
-  <!-- Load libraries in sequence -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-  <!-- Main App - Load AFTER all dependencies -->
   <script type="text/babel">
-    // Check if all libraries loaded
-    console.log('React:', typeof React);
-    console.log('ReactDOM:', typeof ReactDOM);
-    console.log('Recharts:', typeof Recharts);
-    
     const { useState, useMemo } = React;
-    const { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } = Recharts;
     
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
     const CATEGORIES = ['Stocks', 'Bonds', 'Real Estate', 'Cash & Equivalents', 'Cryptocurrency', 'CPF', 'SRS', 'Collectibles', 'Other'];
@@ -64,8 +47,8 @@
         return Object.entries(groups).map(([name, value]) => ({ 
           name, 
           value,
-          percentage: ((value / totalAssets) * 100).toFixed(1)
-        }));
+          percentage: totalAssets > 0 ? ((value / totalAssets) * 100).toFixed(1) : 0
+        })).sort((a, b) => b.value - a.value);
       }, [assets, totalAssets]);
       
       const addAsset = () => {
@@ -91,13 +74,13 @@
       const fmt = (v) => new Intl.NumberFormat('en-SG', { style: 'currency', currency: 'SGD', minimumFractionDigits: 0 }).format(v);
       
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4 md:p-6">
           <div className="max-w-6xl mx-auto">
-            <header className="mb-8">
-              <h1 className="text-4xl font-bold text-white mb-2">Singapore Portfolio Analyzer</h1>
-              <p className="text-slate-300">Track your wealth with CPF, SRS, and SGD-denominated assets</p>
+            <header className="mb-6 md:mb-8">
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Singapore Portfolio Analyzer</h1>
+              <p className="text-slate-300 text-sm md:text-base">Track your wealth with CPF, SRS, and SGD-denominated assets</p>
               <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm text-slate-400">USD/SGD Rate:</span>
+                <span className="text-sm text-slate-400">USD/SGD:</span>
                 <input 
                   type="number" 
                   step="0.01"
@@ -108,18 +91,18 @@
               </div>
             </header>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+              <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
                 <div className="text-sm text-slate-400 mb-1">Total Assets</div>
-                <div className="text-3xl font-bold text-green-400">{fmt(totalAssets)}</div>
+                <div className="text-2xl md:text-3xl font-bold text-green-400">{fmt(totalAssets)}</div>
               </div>
-              <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
+              <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
                 <div className="text-sm text-slate-400 mb-1">Total Liabilities</div>
-                <div className="text-3xl font-bold text-red-400">{fmt(totalLiabilities)}</div>
+                <div className="text-2xl md:text-3xl font-bold text-red-400">{fmt(totalLiabilities)}</div>
               </div>
-              <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
+              <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
                 <div className="text-sm text-slate-400 mb-1">Net Worth</div>
-                <div className="text-3xl font-bold text-blue-400">{fmt(netWorth)}</div>
+                <div className="text-2xl md:text-3xl font-bold text-blue-400">{fmt(netWorth)}</div>
               </div>
             </div>
             
@@ -129,7 +112,7 @@
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`px-6 py-3 font-medium capitalize ${
+                    className={`px-4 md:px-6 py-3 font-medium capitalize whitespace-nowrap ${
                       activeTab === tab ? 'border-b-2 border-blue-400 text-blue-400' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -140,26 +123,37 @@
             </div>
             
             {activeTab === 'overview' && (
-              <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
+              <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
                 <h2 className="text-xl font-semibold text-white mb-4">Asset Allocation</h2>
                 {chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={chartData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        dataKey="value"
-                        label={({ name, percentage }) => `${name}: ${percentage}%`}
-                      >
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => fmt(value)} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="space-y-3">
+                    {chartData.map((item, index) => (
+                      <div key={index} className="relative">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-4 h-4 rounded"
+                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            />
+                            <span className="text-slate-200 font-medium">{item.name}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-slate-200 font-semibold">{fmt(item.value)}</div>
+                            <div className="text-sm text-slate-400">{item.percentage}%</div>
+                          </div>
+                        </div>
+                        <div className="w-full bg-slate-700 rounded-full h-3">
+                          <div 
+                            className="h-3 rounded-full transition-all duration-300"
+                            style={{ 
+                              width: `${item.percentage}%`,
+                              backgroundColor: COLORS[index % COLORS.length]
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="text-center py-12 text-slate-400">
                     <p>No assets yet. Go to Manage tab to add assets.</p>
@@ -169,13 +163,13 @@
             )}
             
             {activeTab === 'manage' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
                   <h2 className="text-xl font-semibold text-white mb-4">Add Asset</h2>
                   <div className="space-y-3 mb-6">
                     <input
                       type="text"
-                      placeholder="Asset name (e.g., Apple Stock, CPF OA)"
+                      placeholder="Asset name"
                       value={newAsset.name}
                       onChange={(e) => setNewAsset({...newAsset, name: e.target.value})}
                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
@@ -218,37 +212,39 @@
                   </div>
                   
                   <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-white mb-3">Your Assets</h3>
-                    {assets.length > 0 ? assets.map(asset => (
-                      <div key={asset.id} className="flex justify-between items-center p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
-                        <div>
-                          <div className="font-medium text-slate-200">{asset.name}</div>
-                          <div className="text-sm text-slate-400">{asset.category}</div>
+                    <h3 className="text-lg font-semibold text-white mb-3">Your Assets ({assets.length})</h3>
+                    <div className="max-h-96 overflow-y-auto space-y-2">
+                      {assets.length > 0 ? assets.map(asset => (
+                        <div key={asset.id} className="flex justify-between items-center p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-slate-200 truncate">{asset.name}</div>
+                            <div className="text-sm text-slate-400">{asset.category}</div>
+                          </div>
+                          <div className="flex items-center gap-3 ml-2">
+                            <span className="font-semibold text-green-400 whitespace-nowrap">{fmt(asset.value)}</span>
+                            <button
+                              onClick={() => setAssets(assets.filter(a => a.id !== asset.id))}
+                              className="text-red-400 hover:text-red-300 text-xl font-bold w-6 h-6 flex-shrink-0"
+                            >
+                              ×
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-semibold text-green-400">{fmt(asset.value)}</span>
-                          <button
-                            onClick={() => setAssets(assets.filter(a => a.id !== asset.id))}
-                            className="text-red-400 hover:text-red-300 text-xl font-bold w-6 h-6"
-                          >
-                            ×
-                          </button>
+                      )) : (
+                        <div className="text-center py-8 text-slate-400 bg-slate-700 rounded">
+                          <p>No assets added yet</p>
                         </div>
-                      </div>
-                    )) : (
-                      <div className="text-center py-8 text-slate-400 bg-slate-700 rounded">
-                        <p>No assets added yet</p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
                 
-                <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
+                <div className="bg-slate-800 rounded-lg shadow-lg p-4 md:p-6 border border-slate-700">
                   <h2 className="text-xl font-semibold text-white mb-4">Add Liability</h2>
                   <div className="space-y-3 mb-6">
                     <input
                       type="text"
-                      placeholder="Liability name (e.g., HDB Loan, Car Loan)"
+                      placeholder="Liability name"
                       value={newLiability.name}
                       onChange={(e) => setNewLiability({...newLiability, name: e.target.value})}
                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400"
@@ -284,27 +280,29 @@
                   </div>
                   
                   <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-white mb-3">Your Liabilities</h3>
-                    {liabilities.length > 0 ? liabilities.map(liability => (
-                      <div key={liability.id} className="flex justify-between items-center p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
-                        <div>
-                          <div className="font-medium text-slate-200">{liability.name}</div>
+                    <h3 className="text-lg font-semibold text-white mb-3">Your Liabilities ({liabilities.length})</h3>
+                    <div className="max-h-96 overflow-y-auto space-y-2">
+                      {liabilities.length > 0 ? liabilities.map(liability => (
+                        <div key={liability.id} className="flex justify-between items-center p-3 bg-slate-700 rounded hover:bg-slate-600 transition-colors">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-slate-200 truncate">{liability.name}</div>
+                          </div>
+                          <div className="flex items-center gap-3 ml-2">
+                            <span className="font-semibold text-red-400 whitespace-nowrap">{fmt(liability.value)}</span>
+                            <button
+                              onClick={() => setLiabilities(liabilities.filter(l => l.id !== liability.id))}
+                              className="text-red-400 hover:text-red-300 text-xl font-bold w-6 h-6 flex-shrink-0"
+                            >
+                              ×
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-semibold text-red-400">{fmt(liability.value)}</span>
-                          <button
-                            onClick={() => setLiabilities(liabilities.filter(l => l.id !== liability.id))}
-                            className="text-red-400 hover:text-red-300 text-xl font-bold w-6 h-6"
-                          >
-                            ×
-                          </button>
+                      )) : (
+                        <div className="text-center py-8 text-slate-400 bg-slate-700 rounded">
+                          <p>No liabilities added yet</p>
                         </div>
-                      </div>
-                    )) : (
-                      <div className="text-center py-8 text-slate-400 bg-slate-700 rounded">
-                        <p>No liabilities added yet</p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -314,9 +312,7 @@
       );
     }
     
-    // Render the app
-    const root = document.getElementById('root');
-    ReactDOM.render(<App />, root);
+    ReactDOM.render(<App />, document.getElementById('root'));
   </script>
 </body>
 </html>
